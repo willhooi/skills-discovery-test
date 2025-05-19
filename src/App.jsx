@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Questionnaire from "./Questionnaire";
 import Result from "./Result";
 import questions from "./questions";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+
+// Shuffle helper (Fisher-Yates)
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
 export default function App() {
   const scoreObj = {
@@ -18,6 +28,9 @@ export default function App() {
   const [step, setStep] = useState("quiz");
   const [scores, setScores] = useState(scoreObj);
 
+  // ✅ Randomize questions only once per quiz session
+  const shuffledQuestions = useMemo(() => shuffleArray(questions), [step === "quiz"]);
+
   const handleFinish = (finalScores) => {
     setScores(finalScores);
     setStep("result");
@@ -25,7 +38,7 @@ export default function App() {
 
   const handleRestart = () => {
     setScores(scoreObj);
-    setStep("quiz");
+    setStep("quiz"); // Triggers reshuffling via useMemo
   };
 
   return (
@@ -38,7 +51,7 @@ export default function App() {
           </div>
 
           {step === "quiz" ? (
-            <Questionnaire questions={questions} onFinish={handleFinish} />
+            <Questionnaire questions={shuffledQuestions} onFinish={handleFinish} />
           ) : (
             <Result scores={scores} onRestart={handleRestart} />
           )}
